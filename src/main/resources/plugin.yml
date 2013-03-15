@@ -1,0 +1,11 @@
+author: twonky4
+database: false
+description: CNHeroChatTransporter
+main: de.cubenation.plugins.cnvote.CNHeroChatTransporter
+name: CNHeroChatTransporter
+startup: postworld
+url: http://www.cube-nation.de/
+version: '${project.version}'
+
+depend:
+  - Transporter
