@@ -25,7 +25,8 @@
 				<filtering>true</filtering>
 				<includes>
 					<include>plugin.yml</include>
-					<include>config.yml</include>
+                    <include>config.yml</include>
+                    <include>defaultConfig.yml</include>
 				</includes>
 			</resource>
 		</resources>
@@ -54,5 +55,15 @@
 			<type>jar</type>
 			<scope>test</scope>
 		</dependency>
+        <dependency>
+            <groupId>com.frdfsnlght.transporter</groupId>
+             <artifactId>Transporter</artifactId>
+             <version>8.14-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.dthielke.herochat</groupId>
+            <artifactId>Herochat</artifactId>
+            <version>5.6.1</version>
+        </dependency>
 	</dependencies>
 </project>
