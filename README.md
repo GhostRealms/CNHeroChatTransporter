@@ -3,6 +3,7 @@ CNHeroChatTransporter
 
 Send HeroChat Channels to other servers using Transport
 
+---
 
 License: The MIT License (MIT)
 
