@@ -1,7 +1,5 @@
 package de.cubenation.plugins.cnherochattransporter;
 
-import java.util.List;
-
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -15,7 +13,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.dthielke.herochat.Channel;
 import com.dthielke.herochat.ChannelChatEvent;
 import com.dthielke.herochat.ChannelManager;
 import com.dthielke.herochat.Herochat;
@@ -105,31 +102,43 @@ public class CNHeroChatTransporter extends JavaPlugin {
     private class ChatListener implements Listener {
     	
         @EventHandler(priority=EventPriority.MONITOR)
-        public void onHeroChatMessage(ChannelChatEvent event) {
+        public void onHeroChatMessage(ChannelChatEvent event) {            
+            if (!event.getChannel().getName().equalsIgnoreCase("global")) {
+                return;
+            }
             if(event.getResult() != Result.ALLOWED) {
-            	return;
+                return;
             }
             
         	String cname = event.getChannel().getName();
-        	
-        	ConfigurationSection config = getConfig().getConfigurationSection("outgoing." + cname);
-        	if (config == null) return;
-        	
-			List<?> receivers = config.getList("receivers");
             String pname = event.getSender().getName();
             String message = event.getMessage();
 
     	    for (RemoteServer s : transporterAPI().getRemoteServers().toArray(new RemoteServer[0])) {
-    	    	if (receivers != null && receivers.size() > 0 && !receivers.contains(s.getName())) continue;
-    	    	
+
+    	        // check if user listens to the remote servers channel, otherwise don't send to this server
+                String remotesChannelName = getConfig().getString("incoming." + s.getName() + ".target");
+                if (remotesChannelName == null) {
+                    getLogger().warning("Channel target for '" + s.getName() + "' coult not be found?!");
+                    continue;
+                }
+                
+                if (!herochatCM().hasChannel(remotesChannelName)) {
+                    getLogger().warning("Channel '" + remotesChannelName + "' coult not be found on this server?!");
+                    continue;
+                }
+
+    	        if (!herochatCM().getChannel(remotesChannelName).getMembers().contains(event.getSender())) {
+                    continue;
+    	        }
+    	        
     	    	TypeMap payload = new TypeMap();
     	    	payload.set("channel", cname);
     	    	payload.set("sender", pname);
     	    	payload.set("message", message);
 				
-    	    	s.sendRemoteRequest(null, payload);
+    	    	s.sendRemoteRequest(null, payload);    	    	
     	    }
-            
     	    
         }
         
@@ -141,25 +150,23 @@ public class CNHeroChatTransporter extends JavaPlugin {
         	String message = payload.getString("message");
         	String remoteServerName = event.getRemoteServer().getName();
         	
-        	ConfigurationSection config = getConfig().getConfigurationSection("incoming." + remoteServerName + "." + cname);
-        	if (config == null) config = getConfig().getConfigurationSection("incoming." + cname);
+        	ConfigurationSection config = getConfig().getConfigurationSection("incoming." + remoteServerName);
         	if (config == null) {
         		getLogger().warning("Found incoming chat transmission from '"+remoteServerName+"' for channel '"+cname+"', but no destination set.");
         		return;
         	}
         	
-        	List<?> sources = config.getList("sources");
-        	if (sources != null && sources.size() > 0 && !sources.contains(remoteServerName)) return;
-        	
         	String targetChannelName = config.getString("target");
-        	if (targetChannelName == null) targetChannelName = cname;
+        	if (targetChannelName == null) {
+                getLogger().warning("Found incoming chat transmission from '"+remoteServerName+"' for channel '"+cname+"', but no target set.");
+                return;
+            }
         	
-        	Channel targetChannel = herochatCM().getChannel(targetChannelName);
-        	if (targetChannel == null) {
-        		getLogger().warning("Targetchannel '"+targetChannelName+"' not found.");
-        		return;
-        	}
-        	
+            if (!herochatCM().hasChannel(targetChannelName)) {
+                getLogger().warning("Targetchannel '"+targetChannelName+"' not found.");
+                return;
+            }
+        	        	
         	String format = config.getString("format");
         	if (format == null) {
         		format = "[%sender%@%source%] %message%";
@@ -170,7 +177,8 @@ public class CNHeroChatTransporter extends JavaPlugin {
         			.replace("%sourceChannel%", cname)
         			.replace("%sourceServer%", remoteServerName)
         			.replace("%message%", message));
-        	targetChannel.announce(output);
+        	
+        	herochatCM().getChannel(targetChannelName).announce(output);
         }
     }
 	
