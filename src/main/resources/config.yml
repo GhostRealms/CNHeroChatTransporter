@@ -1,13 +1,4 @@
-outgoing:
-    Global:
-        receivers: []
 incoming:
-    Global:
-        sources: []
-        target: Global
-        format: '[%sender% @ %sourceServer%|%sourceChannel%] %message%'
-    SomeRemoteServer.SomeRemoteChannel:
-        sources: []
-        target: SomeLocalChannel
-        format: '[%sender% @ %sourceServer%|%sourceChannel%] %message%'
-        
+  SomeRemoteBungeeCordServer:
+    target: SomeLocalHeroChatChannel
+    format: '&7%sender%&7: %message%'
